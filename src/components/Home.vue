@@ -135,7 +135,7 @@ export default {
     display: flex;
     align-items: center;
     margin-left: 25px;
-    font: bold 16px / 24px UberMove, Helvetica, Arial, sans-serif;
+    font: bold 17px / 24px UberMove, Helvetica, Arial, sans-serif;
     text-decoration: none;
     color: #fff;
   }

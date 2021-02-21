@@ -16,6 +16,7 @@
                 :src="getImgPath(item.name, example)"
                 @click="gotoExample(item.name, example)"
                 :alt="example.name"
+                class="card-bag-img"
               />
               <div class="cardInfo">
                 <span>{{ example.label }}</span>
@@ -83,27 +84,31 @@ export default {
   flex-wrap: wrap;
   margin-top: 10px;
   .cardOuter {
+    max-width: 232px;
+    max-height: 232px;
+    padding: 4px;
+    margin: 3.5px;
     .card {
       position: relative;
       cursor: pointer;
       text-decoration: none;
-      padding: 12px;
+      max-width: 232px;
+      max-height: 232px;
       > img {
-        max-width: 220px;
+        width: 100%;
       }
       .cardInfo {
         display: flex;
         position: absolute;
-        height: 78.3%;
-        width: 79.1%;
-        top: 10%;
-        left: 10%;
+        height: 91.147%;
+        width: 91.147%;
+        top: 4%;
+        left: 4%;
         justify-content: center;
         flex-direction: column;
         text-align: center;
         color: #fff;
         border: 1px solid rgb(255, 255, 255);
-        background-color: rgba(192, 196, 204, 0.6);
         opacity: 0;
         transition-property: opacity;
         transition-duration: 0.4s;
@@ -114,10 +119,18 @@ export default {
         opacity: 1;
       }
     }
+    :hover {
+      .card-bag-img {
+        filter: contrast(0.2);
+        transition-property: filter;
+        transition-duration: 0.4s;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
   }
-  :focus {
-    border: 1px solid #9325BC; 
-    box-shadow: rgb(0 0 0 / 16%) 0px 4px 16px;
-  }
+}
+
+.cardOuter:hover {
+  box-shadow: rgba(0,0,0,0.16) 0px 4px 16px;
 }
 </style>
