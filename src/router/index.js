@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import Home from '../components/Home'
 import Index from '../components/index'
 import Sandcastle from '../components/sandcastle/index'
+import Editor from '../views/editor/index'
 import Documentation from '../components/documentation/index'
 import Blog from '../components/blog/index'
 
@@ -34,7 +35,12 @@ const routes = [
         component: Blog
       }
     ]
-  }
+  },
+  {
+    path: '/editor',
+    name: 'editor',
+    component: Editor
+  },
 ]
 
 const router = new VueRouter({

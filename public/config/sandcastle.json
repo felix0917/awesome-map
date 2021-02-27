@@ -1,4 +1,14 @@
 [{
+    "name": "start",
+    "label": "开始",
+    "description": "开始",
+    "examples": [{
+      "name": "helloAwesomeMap",
+      "label": "开始",
+      "description": ""
+    }]
+  },
+  {
     "name": "tourism",
     "label": "旅游指南",
     "description": "旅游地图",

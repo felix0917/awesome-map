@@ -11,10 +11,9 @@
             :key="index"
             class="cardOuter"
           >
-            <div class="card">
+            <div class="card" @click="gotoEditor(item.name, example)">
               <img
                 :src="getImgPath(item.name, example)"
-                @click="gotoExample(item.name, example)"
                 :alt="example.name"
                 class="card-bag-img"
               />
@@ -60,8 +59,8 @@ export default {
         "png"}`;
     },
     // 打开演示页面
-    gotoExample(folder, example) {
-      window.open();
+    gotoEditor(folder, example) {
+      window.open(`./#/editor?type=${folder}&example=${example.name}`);
     },
   },
 };
@@ -131,6 +130,6 @@ export default {
 }
 
 .cardOuter:hover {
-  box-shadow: rgba(0,0,0,0.16) 0px 4px 16px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 4px 16px;
 }
 </style>
