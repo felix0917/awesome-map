@@ -1,9 +1,16 @@
-import cesium,openlayers;
+import cesium;
 <div id="cesiumContainer"></div>
 <script>
   let viewer = new Cesium.Viewer("cesiumContainer");
   // 隐藏版权
   viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  // 添加《Chart Of The World On Mercator's projection》瓦片数据
+  viewer.scene.imageryLayers.addImageryProvider(
+    new Cesium.UrlTemplateImageryProvider({
+      url: "http://localhost:9000/image/c80053807aa111eb89ddef12dcc9aeeb/{z}/{x}/{y}",
+    })
+  );
 </script>
 <style>
   #cesiumContainer {

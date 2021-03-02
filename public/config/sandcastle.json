@@ -1,72 +1,23 @@
-[{
-    "name": "start",
-    "label": "开始",
-    "description": "开始",
-    "examples": [{
-      "name": "helloAwesomeMap",
-      "label": "开始",
-      "description": ""
-    }]
-  },
+[
   {
-    "name": "tourism",
-    "label": "旅游指南",
-    "description": "旅游地图",
+    "name": "mapCollection",
+    "label": "艺术地球仪",
+    "description": "",
     "examples": [{
-        "name": "peakTouristAttractions",
-        "label": "景点搜索热门",
-        "description": "利用百度指数和百度地图数据可视化近期内全国各旅游景点的搜索热度"
-      },
-      {
-        "name": "peakTouristAttractions1",
-        "label": "最佳路线规划",
+        "name": "TheDiscoveryOfAmerica",
+        "label": "《The Discovery Of America》",
         "description": ""
       },
       {
-        "name": "peakTouristAttractions2",
-        "label": "目的地高峰预测",
+        "name": "TheFloorOfTheOceans",
+        "label": "《The Floor Of The Oceans》",
         "description": ""
       },
       {
-        "name": "peakTouristAttractions3",
-        "label": "地方美食",
-        "description": "度"
-      },
-      {
-        "name": "peakTouristAttractions4",
-        "label": "酒店空间分析",
+        "name": "ChartOfTheWorld",
+        "label": "《Chart Of The World On Mercator's projection》",
         "description": ""
       }
     ]
-  },
-  {
-    "name": "covid19",
-    "label": "疫情防控",
-    "description": "疫情地图",
-    "examples": [{
-      "name": "covid19",
-      "label": "疫情空间扩散趋势",
-      "description": ""
-    }]
-  },
-  {
-    "name": "campus",
-    "label": "校园地图",
-    "description": "校园地图",
-    "examples": [{
-      "name": "campus",
-      "label": "校园漫步",
-      "description": ""
-    }]
-  },
-  {
-    "name": "dataVisualization",
-    "label": "大数据可视化",
-    "description": "数据可视化地图",
-    "examples": [{
-      "name": "dataVisualization",
-      "label": "动态出租车轨迹数据",
-      "description": ""
-    }]
   }
 ]

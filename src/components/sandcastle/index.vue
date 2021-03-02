@@ -113,6 +113,10 @@ export default {
         transition-duration: 0.4s;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         font: 1.5em / 20px UberMove, Helvetica, Arial, sans-serif;
+        > span {
+          line-height: 30px;
+          padding-right: 10px;
+        }
       }
       :hover {
         opacity: 1;

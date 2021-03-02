@@ -1,0 +1,21 @@
+import cesium;
+<div id="cesiumContainer"></div>
+<script>
+  let viewer = new Cesium.Viewer("cesiumContainer");
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  // 添加《The Discovery Of America》瓦片数据
+  viewer.scene.imageryLayers.addImageryProvider(
+    new Cesium.UrlTemplateImageryProvider({
+      url: "http://localhost:9000/image/da5e0500798811eb89ddef12dcc9aeeb/{z}/{x}/{y}",
+    })
+  );
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

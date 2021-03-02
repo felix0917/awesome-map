@@ -7,7 +7,7 @@
         <a href="./#/sandcastle">Sandcastle</a>
         <a href="./#/documentation">Documentation</a>
         <a href="./#/blog">Blog</a>
-        <a href="https://github.com/undefinedGIS/joey"
+        <a href="https://github.com/undefinedGIS/awesome-map"
           >GitHub
           <svg
             fill="currentColor"
@@ -112,7 +112,7 @@ export default {
         let el = document.getElementById("nav-" + value);
         if (el) {
           document.getElementById("sandcastle-container").scrollTop =
-            el.offsetTop-65;
+            el.offsetTop - 65;
         }
       }
     },
@@ -155,6 +155,7 @@ export default {
   width: 260px !important;
   border-right: 1px solid rgb(202, 213, 224);
   .el-menu {
+    border: none;
     height: 100%;
     .el-submenu {
       font: bold 14px / 20px UberMove, Helvetica, Arial, sans-serif;
@@ -163,6 +164,7 @@ export default {
       .el-menu-item {
         color: rgb(72, 86, 104);
         margin-left: 10px;
+        min-width: 365px;
       }
     }
   }
