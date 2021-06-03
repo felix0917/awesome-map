@@ -1,0 +1,38 @@
+import cesium;
+<div id="cesiumContainer"></div>
+<script>
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    timeline: false,
+    navigationHelpButton:false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  var bingStyle = [
+    Cesium.BingMapsStyle.AERIAL_WITH_LABELS,
+    Cesium.BingMapsStyle.COLLINS_BART,
+    Cesium.BingMapsStyle.CANVAS_GRAY,
+    Cesium.BingMapsStyle.CANVAS_LIGHT,
+    Cesium.BingMapsStyle.CANVAS_DARK,
+    Cesium.BingMapsStyle.ORDNANCE_SURVEY,
+    Cesium.BingMapsStyle.ROAD,
+    Cesium.BingMapsStyle.AERIAL,
+  ];
+
+  var bingMapProvider = new Cesium.BingMapsImageryProvider({
+    url: "https://dev.virtualearth.net",
+    key: "AmXdbd8UeUJtaRSn7yVwyXgQlBBUqliLbHpgn2c76DfuHwAXfRrgS5qwfHU6Rhm8",
+    mapStyle: bingStyle[4],
+  });
+
+  // 添加BingMap在线地图服务
+  viewer.scene.imageryLayers.addImageryProvider(bingMapProvider);
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

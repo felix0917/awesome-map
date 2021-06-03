@@ -1,7 +1,10 @@
 import cesium;
 <div id="cesiumContainer"></div>
 <script>
-  let viewer = new Cesium.Viewer("cesiumContainer");
+  let viewer = new Cesium.Viewer("cesiumContainer",{
+    animation:false,
+    timeline:false,
+  });
   // 隐藏版权
   viewer._cesiumWidget._creditContainer.style.display = "none";
 

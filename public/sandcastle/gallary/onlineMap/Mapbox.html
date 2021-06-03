@@ -1,0 +1,36 @@
+import cesium;
+<div id="cesiumContainer"></div>
+<script>
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    timeline: false,
+    navigationHelpButton:false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  var styleIds = [
+    "streets-v11",
+    "outdoors-v11",
+    "light-v10",
+    "dark-v10",
+    "satellite-v9",
+    "msatellite-streets-v11",
+  ];
+
+  let mapboxProvider = new Cesium.MapboxStyleImageryProvider({
+    styleId: styleIds[0],
+    accessToken:
+      "pk.eyJ1Ijoid2h1Z2lzZXIiLCJhIjoiY2ttNHk1d3hjMDk2azJ1cDFyN28ydmZ4MSJ9.fQz7OdATkXCPsCypo14KKw",
+  });
+  
+  // 添加Mapbox在线地图服务
+  viewer.scene.imageryLayers.addImageryProvider(mapboxProvider);
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

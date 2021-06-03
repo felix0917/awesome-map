@@ -3,7 +3,8 @@
     "name": "mapCollection",
     "label": "艺术地球仪",
     "description": "",
-    "examples": [{
+    "examples": [
+      {
         "name": "TheDiscoveryOfAmerica",
         "label": "《The Discovery Of America》",
         "description": ""
@@ -15,7 +16,175 @@
       },
       {
         "name": "ChartOfTheWorld",
-        "label": "《Chart Of The World On Mercator's projection》",
+        "label": "《Chart Of The World On Mercator's Projection》",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "onlineMap",
+    "label": "在线地图",
+    "description": "",
+    "examples": [
+      {
+        "name": "Cesium",
+        "label": "Cesium Ion",
+        "description": ""
+      },
+      {
+        "name": "ArcGIS",
+        "label": "ArcGIS地图",
+        "description": ""
+      },
+      {
+        "name": "Mapbox",
+        "label": "Mapbox地图",
+        "description": ""
+      },
+      {
+        "name": "BingMap",
+        "label": "BingMap",
+        "description": ""
+      },
+      {
+        "name": "OSM",
+        "label": "OSM地图",
+        "description": ""
+      },
+      {
+        "name": "Baidu",
+        "label": "百度地图",
+        "description": ""
+      },
+      {
+        "name": "Gaode",
+        "label": "高德地图",
+        "description": ""
+      },
+      {
+        "name": "Tencent",
+        "label": "腾讯地图",
+        "description": ""
+      },
+      {
+        "name": "TianDiTu",
+        "label": "天地图",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "offlineMap",
+    "label": "离线地图",
+    "description": "",
+    "examples": [
+      {
+        "name": "imageryEarth",
+        "label": "地球影像",
+        "description": ""
+      },
+      {
+        "name": "blueEarth",
+        "label": "蓝色星球",
+        "description": ""
+      },
+      {
+        "name": "nightEarth",
+        "label": "夜晚星球",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "terrain",
+    "label": "三维地形",
+    "description": "",
+    "examples": [
+      {
+        "name": "CesiumTerrain",
+        "label": "Cesium地形(中国)",
+        "description": ""
+      },
+      {
+        "name": "ArcGisTerrain",
+        "label": "ArcGIS地形",
+        "description": ""
+      },
+      {
+        "name": "TerrainExaggeration",
+        "label": "地形夸张",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "model",
+    "label": "三维模型",
+    "description": "",
+    "examples": [
+      {
+        "name": "TileSet",
+        "label": "倾斜摄影数据",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "analysis",
+    "label": "空间分析",
+    "description": "",
+    "examples": [
+      {
+        "name": "singleSearch",
+        "label": "单体查询",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "sceneEffects",
+    "label": "场景特效",
+    "description": "",
+    "examples": []
+  },
+  {
+    "name": "dataVisualization",
+    "label": "大数据渲染",
+    "description": "",
+    "examples": [
+      {
+        "name": "modelInstance",
+        "label": "批量模型（3万个）",
+        "description": ""
+      }
+    ]
+  },
+  {
+    "name": "microScene",
+    "label": "微场景",
+    "description": "",
+    "examples": []
+  },
+  {
+    "name": "echarts",
+    "label": "Echarts",
+    "description": "",
+    "examples": []
+  },
+  {
+    "name": "mapV",
+    "label": "MapV",
+    "description": "",
+    "examples": []
+  },
+  {
+    "name": "utils",
+    "label": "Utils",
+    "description": "",
+    "examples": [
+      {
+        "name": "getCoorAndCameraInfo",
+        "label": "坐标及视角查询",
         "description": ""
       }
     ]

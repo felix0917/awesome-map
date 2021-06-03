@@ -1,0 +1,594 @@
+import cesium;
+<div id="cesiumContainer"></div>
+
+<!-- 控制栏 -->
+<div class="control">
+  <div>
+    <label
+      ><input
+        id="ld"
+        type="radio"
+        name="type"
+        value="ld"
+        checked="checked"
+      />楼栋</label
+    >
+  </div>
+  <div>
+    <label><input id="lc" type="radio" name="type" value="lc" />楼层</label>
+  </div>
+  <div class="splice"></div>
+  <div>
+    <p id="selectedInfo"></p>
+  </div>
+</div>
+
+<!-- 消息提示框气泡 -->
+<div
+  id="tooltip-view"
+  class="cesium-popup"
+  style="transform: translate3d(364.5px, 338px, 0px); display: none; pointer-events:none;"
+>
+  <a
+    class="cesium-popup-close-button cesium-popup-color"
+    onclick="document.getElementById('tooltip-view').style.display='none';"
+    >×</a
+  >
+  <div class="cesium-popup-background" style="padding: 1px 0;">
+    <div
+      id="tooltip-content"
+      class="cesium-popup-content cesium-popup-color"
+    ></div>
+  </div>
+  <div class="cesium-popup-tip-container">
+    <div class="cesium-popup-tip  cesium-popup-background"></div>
+  </div>
+</div>
+
+<script>
+  /**
+   * 解决加载gltf2.0报错的问题
+   */
+  let fixGltf = (gltf) => {
+    if (!gltf.extensionsUsed || !gltf.extensionsRequired) {
+      return;
+    }
+    let v = gltf.extensionsUsed.indexOf("KHR_technique_webgl");
+    let t = gltf.extensionsRequired.indexOf("KHR_technique_webgl");
+    if (v !== -1) {
+      gltf.extensionsRequired.splice(t, 1, "KHR_techniques_webgl");
+      gltf.extensionsUsed.splice(v, 1, "KHR_techniques_webgl");
+      gltf.extensions = gltf.extensions || {};
+      gltf.extensions["KHR_techniques_webgl"] = {};
+      gltf.extensions["KHR_techniques_webgl"].programs = gltf.programs;
+      gltf.extensions["KHR_techniques_webgl"].shaders = gltf.shaders;
+      gltf.extensions["KHR_techniques_webgl"].techniques = gltf.techniques;
+      let techniques = gltf.extensions["KHR_techniques_webgl"].techniques;
+
+      gltf.materials.forEach(function(mat, index) {
+        gltf.materials[index].extensions["KHR_technique_webgl"].values =
+          gltf.materials[index].values;
+        gltf.materials[index].extensions["KHR_techniques_webgl"] =
+          gltf.materials[index].extensions["KHR_technique_webgl"];
+
+        let vtxfMaterialExtension =
+          gltf.materials[index].extensions["KHR_techniques_webgl"];
+
+        for (let value in vtxfMaterialExtension.values) {
+          let us = techniques[vtxfMaterialExtension.technique].uniforms;
+          for (let key in us) {
+            if (us[key] === value) {
+              vtxfMaterialExtension.values[key] =
+                vtxfMaterialExtension.values[value];
+              delete vtxfMaterialExtension.values[value];
+              break;
+            }
+          }
+        }
+      });
+
+      techniques.forEach((t) => {
+        for (let attribute in t.attributes) {
+          let name = t.attributes[attribute];
+          t.attributes[attribute] = t.parameters[name];
+        }
+
+        for (let uniform in t.uniforms) {
+          let name = t.uniforms[uniform];
+          t.uniforms[uniform] = t.parameters[name];
+        }
+      });
+    }
+  };
+
+  let viewer, scene;
+  let ldCollection = new Cesium.PrimitiveCollection();
+  let lcCollection = new Cesium.PrimitiveCollection();
+  let zydrcJson = {
+    ld: [
+      {
+        coordinates: [
+          108.960802,
+          34.219752,
+          108.960926,
+          34.219747,
+          108.960935,
+          34.219631,
+          108.960788,
+          34.219632,
+          108.960802,
+          34.219752,
+        ],
+        height: 50,
+        name: "财神殿",
+      },
+      {
+        coordinates: [
+          108.960361,
+          34.22031,
+          108.96087,
+          34.220302,
+          108.960866,
+          34.219848,
+          108.960365,
+          34.219837,
+          108.960361,
+          34.22031,
+        ],
+        height: 110,
+        name: "大雁塔",
+      },
+    ],
+    lc: [
+      {
+        baseHeight: 40.83,
+        floorNum: 7,
+        floorHeight: 7,
+        center: [108.960599, 34.220082],
+        HeadingPitchRoll: [0, 0, 0],
+        Translation: [0, 0, 0],
+        dimensions: [30, 30, 7],
+        name: "大雁塔",
+      },
+    ],
+  };
+
+  Object.defineProperties(Cesium.Model.prototype, {
+    _cachedGltf: {
+      set: function(value) {
+        this._vtxf_cachedGltf = value;
+        if (this._vtxf_cachedGltf && this._vtxf_cachedGltf._gltf) {
+          fixGltf(this._vtxf_cachedGltf._gltf);
+        }
+      },
+      get: function() {
+        return this._vtxf_cachedGltf;
+      },
+    },
+  });
+
+  initScene();
+
+  function initScene() {
+    viewer = new Cesium.Viewer("cesiumContainer", {
+      homeButton: false,
+      vrButton: false,
+      fullscreenButton: true,
+      animation: true,
+      geocoder: false,
+      timeline: true,
+      sceneModePicker: false,
+      navigationHelpButton: false,
+      infoBox: false,
+      baseLayerPicker: false,
+      selectionIndicator: true,
+      shouldAnimate: true,
+    });
+
+    viewer._cesiumWidget._creditContainer.style.display = "none"; // 不显示三维信息
+    viewer.animation.container.style.visibility = "hidden"; // 不显示动画控件
+    viewer.timeline.container.style.visibility = "hidden"; // 不显示时间控件
+    scene = viewer.scene;
+
+    // 隐藏地球
+    viewer.scene.skyBox.show = false;
+    viewer.scene.backgroundColor = Cesium.Color.WHITE;
+    viewer.scene.sun.show = false;
+    viewer.scene.moon.show = false;
+    viewer.scene.globe.show = false;
+    viewer.scene.skyAtmosphere.show = false;
+
+    scene.primitives.add(ldCollection);
+    scene.primitives.add(lcCollection);
+
+    initWork();
+  }
+
+  function initWork() {
+    let tileset = addDytTileSet({
+      url: "http://localhost:917/dyt2/tileset.json",
+      name: "建筑物",
+      offset: {
+        z: 60.0,
+      },
+    });
+
+    viewer.scene.primitives.add(tileset);
+    viewer.zoomTo(tileset),
+      (function(viewer) {
+        let selected, primitive, color, r, attribute;
+        new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas).setInputAction(
+          function(move) {
+            let pick = viewer.scene.pick(move.endPosition);
+
+            if (Cesium.defined(pick) && Cesium.defined(pick.id)) {
+              if (pick.id === selected) return;
+              Cesium.defined(selected) &&
+                (((attribute = primitive.getGeometryInstanceAttributes(
+                  selected
+                )).color = color),
+                (attribute.show = r),
+                (selected = void 0),
+                (primitive = void 0),
+                (color = void 0),
+                (r = void 0));
+            }
+
+            Cesium.defined(pick) &&
+            Cesium.defined(pick.primitive) &&
+            Cesium.defined(pick.id) &&
+            Cesium.defined(pick.primitive.getGeometryInstanceAttributes)
+              ? ((selected = pick.id),
+                (primitive = pick.primitive),
+                (attribute = primitive.getGeometryInstanceAttributes(selected)),
+                (color = attribute.color),
+                (r = attribute.show),
+                viewer.scene.invertClassification ||
+                  (attribute.color = [0, 0, 255, 80]),
+                (attribute.show = [1]))
+              : Cesium.defined(selected) &&
+                (((attribute = primitive.getGeometryInstanceAttributes(
+                  selected
+                )).color = color),
+                (attribute.show = r),
+                (selected = void 0),
+                (primitive = void 0),
+                (color = void 0));
+            if (Cesium.defined(pick) && Cesium.defined(pick.id)) {
+              let ray = viewer.scene.camera.getPickRay(move.endPosition);
+              let cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+
+              document.getElementById("tooltip-view").setAttribute('style','display:none');
+              document.getElementById("tooltip-content").innerHTML = "";
+              document
+                .getElementById("tooltip-content")
+                .append(typeof pick.id == "string" ? pick.id : pick.id._name);
+              let x =
+                move.endPosition.x -
+                document.getElementById("tooltip-view").offsetWidth / 2;
+              if (
+                move.endPosition.x >=
+                document.getElementById("cesiumContainer").clientWidth -
+                  document.getElementById("tooltip-view").clientWidth
+              ) {
+                x =
+                  document.getElementById("cesiumContainer").clientWidth -
+                  document.getElementById("tooltip-view").clientWidth -
+                  100;
+              }
+              let y =
+                move.endPosition.y -
+                document.getElementById("tooltip-view").offsetHeight -
+                100;
+
+              document.getElementById("tooltip-view").setAttribute(
+                "style",
+                `transform:
+              translate3d(${x}px, ${y}px, 0)`
+              );
+            } else {
+              document.getElementById("tooltip-content").innerHTML = "";
+              document
+                .getElementById("tooltip-view")
+                .setAttribute("style", "display:none");
+            }
+          },
+          Cesium.ScreenSpaceEventType.MOUSE_MOVE
+        );
+      })(viewer),
+      (function(viewer) {
+        let selected;
+        new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas).setInputAction(
+          function(pick) {
+            var res = getCartographic(pick.position);
+
+            var pickObj = viewer.scene.pick(pick.position);
+            if (Cesium.defined(pickObj) && Cesium.defined(pickObj.id)) {
+              if (pickObj.id === selected) return;
+              Cesium.defined(selected) && (selected = void 0);
+            }
+            // 点击
+            if (
+              Cesium.defined(pickObj) &&
+              Cesium.defined(pickObj.primitive) &&
+              Cesium.defined(pickObj.id) &&
+              Cesium.defined(pickObj.primitive.getGeometryInstanceAttributes)
+            ) {
+              selected = pickObj.id;
+              var name =
+                typeof selected == "string" ? selected : selected._name;
+              document.getElementById("selectedInfo").innerHTML =
+                "用于demo的建筑," + name;
+            } else {
+              Cesium.defined(selected) && (selected = void 0);
+            }
+          },
+          Cesium.ScreenSpaceEventType.LEFT_CLICK
+        );
+      })(viewer);
+
+    document.getElementById("ld").addEventListener("click", () => {
+      ldCollection.removeAll();
+      lcCollection.removeAll();
+      buildingHighlightLd(viewer);
+    });
+
+    document.getElementById("lc").addEventListener("click", () => {
+      ldCollection.removeAll();
+      lcCollection.removeAll();
+      buildingHighlightLc(viewer);
+    });
+
+    buildingHighlightLd(viewer);
+  }
+
+  function addDytTileSet(options) {
+    let dytTileset = new Cesium.Cesium3DTileset({
+      url: options.url,
+      name: options.name,
+      maximumScreenSpaceError: 1,
+    });
+    dytTileset.readyPromise.then(function(tileset) {
+      let cartographic = Cesium.Cartographic.fromCartesian(
+        tileset.boundingSphere.center
+      );
+      let surface = Cesium.Cartesian3.fromRadians(
+        cartographic.longitude,
+        cartographic.latitude,
+        cartographic.height
+      );
+      let offset = Cesium.Cartesian3.fromRadians(
+        cartographic.longitude,
+        cartographic.latitude,
+        options.offset.z
+      );
+      let translation = Cesium.Cartesian3.subtract(
+        offset,
+        surface,
+        new Cesium.Cartesian3()
+      );
+      tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+    });
+
+    return dytTileset;
+  }
+
+  function getCartographic(position) {
+    let ray = viewer.scene.camera.getPickRay(position);
+    let cartesian = null;
+    let pickPostion = {};
+    let feature = viewer.scene.pick(position);
+    if (
+      viewer.scene.pickPositionSupported &&
+      Cesium.defined(feature) &&
+      feature.content
+    ) {
+      cartesian = viewer.scene.pickPosition(position);
+    } else if (feature instanceof Cesium.Cesium3DTileFeature) {
+      cartesian = viewer.scene.pickPosition(position);
+    } else {
+      cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+    }
+    if (cartesian) {
+      let cartographic = Cesium.Cartographic.fromCartesian(cartesian); // 结果对象中的值将以弧度表示。
+      let longitude = Number(Cesium.Math.toDegrees(cartographic.longitude));
+      let latitude = Number(Cesium.Math.toDegrees(cartographic.latitude));
+      let height = Number(cartographic.height);
+      //pickPostion = { 'longitude': longitude.toFixed(6), 'latitude': latitude.toFixed(6), 'height': height.toFixed(2) };
+      pickPostion = [
+        longitude.toFixed(6),
+        latitude.toFixed(6),
+        height.toFixed(2),
+      ].join(",");
+    }
+    return pickPostion;
+  }
+
+  // 高亮楼栋
+  function buildingHighlightLd(viewer) {
+    let scene = viewer.scene;
+
+    // 楼栋
+    zydrcJson.ld.forEach((value) => {
+      addLdPrimitive(value);
+    });
+  }
+
+  // 加载楼栋Primitive
+  function addLdPrimitive(e) {
+    ldCollection.add(
+      new Cesium.ClassificationPrimitive({
+        geometryInstances: new Cesium.GeometryInstance({
+          geometry: new Cesium.PolygonGeometry({
+            polygonHierarchy: new Cesium.PolygonHierarchy(
+              Cesium.Cartesian3.fromDegreesArray(e.coordinates)
+            ),
+            extrudedHeight: e.height,
+            //vertexFormat: Cesium.EllipsoidSurfaceAppearance.VERTEX_FORMAT
+          }),
+          attributes: {
+            //顶点着色器属性
+            color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+              new Cesium.Color(1, 1, 1, 1e-4)
+            ),
+            show: new Cesium.ShowGeometryInstanceAttribute(true), //确定是否显示几何实例
+          },
+          id: e.name,
+        }),
+        classificationType: Cesium.ClassificationType.BOTH, //是否影响地形
+      })
+    );
+  }
+
+  let buildingHighlightLc = function(viewer) {
+    let scene = viewer.scene;
+
+    // 楼层
+    let lcInfo = zydrcJson.lc[0];
+    for (let i = 1; i <= lcInfo.floorNum; i++) {
+      addLcPrimitive(
+        [
+          lcInfo.center[0],
+          lcInfo.center[1],
+          lcInfo.baseHeight + lcInfo.floorHeight * i,
+        ],
+        lcInfo.dimensions,
+        lcInfo.name ? lcInfo.name + ":" + i + "层" : i
+      );
+    }
+  };
+
+  // 加载楼层Primitive
+  function addLcPrimitive(center, dimensions, name) {
+    let position = new Cesium.Cartesian3.fromDegrees(
+      center[0],
+      center[1],
+      center[2]
+    );
+    (s = Cesium.Transforms.eastNorthUpToFixedFrame(position)),
+      //HeadingPitchRoll:旋转值 Translation:平移值
+      (rotation = Cesium.Matrix3.fromHeadingPitchRoll(
+        new Cesium.HeadingPitchRoll(0, 0, 0)
+      )),
+      //fromRotationTranslation(旋转, 平移, 结果);矩阵计算
+      (u = Cesium.Matrix4.fromRotationTranslation(
+        rotation,
+        new Cesium.Cartesian3(0, 0, 0)
+      ));
+    Cesium.Matrix4.multiply(s, u, s);
+    lcCollection.add(
+      new Cesium.ClassificationPrimitive({
+        geometryInstances: new Cesium.GeometryInstance({
+          geometry: Cesium.BoxGeometry.fromDimensions({
+            //给定其尺寸，创建一个以原点为中心的立方体
+            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT, //webgl 顶点着色器 设置颜色
+            dimensions: new Cesium.Cartesian3(
+              dimensions[0],
+              dimensions[1],
+              dimensions[2]
+            ),
+          }),
+          modelMatrix: s, //模型矩阵
+          attributes: {
+            //顶点着色器属性
+            color: Cesium.ColorGeometryInstanceAttribute.fromColor(
+              new Cesium.Color(1, 1, 1, 1e-4)
+            ),
+            show: new Cesium.ShowGeometryInstanceAttribute(true), //确定是否显示几何实例
+          },
+          id: name,
+        }),
+        classificationType: Cesium.ClassificationType.CESIUM_3D_TILE, //是否影响地形
+      })
+    );
+  }
+</script>
+
+<style>
+  html,
+  body,
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .control {
+    position: absolute;
+    min-width: 166px;
+    background: rgba(48, 51, 54, 0.7);
+    top: 10px;
+    right: 10px;
+    color: white;
+    font-size: 14px;
+    padding: 20px;
+  }
+  .splice {
+    border: solid white 1px;
+    margin: 6px 0;
+  }
+  /*弹出框样式*/
+  .cesium-popup {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    text-align: left;
+  }
+  .cesium-popup-background {
+    background: rgba(35, 72, 72, 0.6);
+    border-radius: 6px;
+  }
+  .cesium-popup-content-wrapper {
+    text-align: center;
+    max-height: 600px;
+    overflow-y: auto;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+    text-align: left;
+    border-radius: 3px;
+  }
+  .cesium-popup-color {
+    color: white;
+  }
+  .cesium-popup-content {
+    margin: 15px 10px 10px;
+    line-height: 1.4;
+    font-size: 13px;
+    max-width: 439px;
+    min-width: 50px;
+  }
+  .cesium-popup-tip-container {
+    margin: 0 auto;
+    width: 40px;
+    height: 13px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cesium-popup-tip {
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+    width: 17px;
+    height: 17px;
+    padding: 1px;
+    margin: -10px auto 0;
+    -webkit-transform: rotate(45deg);
+    transform: rotate(45deg);
+  }
+  .cesium-popup-close-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 4px 4px 0 0;
+    text-align: center;
+    width: 18px;
+    height: 14px;
+    font: 16px/14px Tahoma, Verdana, sans-serif;
+    text-decoration: none;
+    font-weight: 700;
+    background: transparent;
+    z-index: 9999;
+  }
+  .cesium-popup-close-button:hover {
+    cursor: pointer;
+    color: #23527c;
+  }
+</style>
