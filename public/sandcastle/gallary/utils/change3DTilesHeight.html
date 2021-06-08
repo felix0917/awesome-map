@@ -1,0 +1,79 @@
+import cesium,GUI;
+<div id="cesiumContainer"></div>
+<script>
+  const params = {
+    height: 0,
+  };
+
+  let gui = new dat.GUI();
+  gui.add(params, "height", 0, 200, 5).onChange((val) => {
+    console.log(params.height);
+    changeHeight(tileset, params.height);
+  });
+  gui.open();
+
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    baseLayerPicker: false,
+    timeline: false,
+    navigationHelpButton: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  // 加载3dtile模型
+  let tileset = new Cesium.Cesium3DTileset({
+    url: "http://localhost:917/7_webp+grid+zip/tileset.json",
+    maximumScreenSpaceError: 1,
+  });
+
+  viewer.scene.primitives.add(tileset);
+  tileset.readyPromise.then(function(argument) {
+    // 更改相机状态
+    viewer.camera.flyToBoundingSphere(tileset.boundingSphere);
+    changeHeight(tileset, params.height);
+  });
+
+  // 调整3DTiles高度
+  function changeHeight(tileset, height) {
+    height = Number(height);
+    if (isNaN(height)) {
+      return;
+    }
+
+    let cartographic = Cesium.Cartographic.fromCartesian(
+      tileset.boundingSphere.center
+    );
+
+    let surface = Cesium.Cartesian3.fromRadians(
+      cartographic.longitude,
+      cartographic.latitude,
+      cartographic.height
+    );
+
+    let offset = Cesium.Cartesian3.fromRadians(
+      cartographic.longitude,
+      cartographic.latitude,
+      height
+    );
+
+    let translation = Cesium.Cartesian3.subtract(
+      offset,
+      surface,
+      new Cesium.Cartesian3()
+    );
+
+    tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+  }
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

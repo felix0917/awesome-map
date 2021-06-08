@@ -1,0 +1,175 @@
+import cesium,GUI;
+<div id="cesiumContainer"></div>
+<script>
+  const params = {
+    scanSpeed: 0.1,
+    scanColor: "#7FFFD4",
+    scanFill: true,
+    scanOutline: false,
+    scanOutlineColor: "#7FFFD4",
+    scanOutlineWidth: 1,
+
+    maskColor: "#7FFFD4",
+    maskFill: true,
+    maskOutline: true,
+    maskOutlineColor: "#7FFFD4",
+    maskOutlineWidth: 1,
+  };
+
+  let gui = new dat.GUI();
+  gui.add(params, "scanSpeed", 0.1, 20, 0.1);
+  gui.addColor(params, "scanColor").onChange(() => {
+    scanEntity.wall.material = Cesium.Color.fromCssColorString(
+      params.scanColor
+    ).withAlpha(0.5);
+  });
+  gui.add(params, "scanFill").onChange(() => {
+    scanEntity.wall.fill = params.scanFill;
+  });
+  gui.add(params, "scanOutline").onChange(() => {
+    scanEntity.wall.outline = params.scanOutline;
+  });
+  gui.addColor(params, "scanOutlineColor").onChange(() => {
+    scanEntity.wall.outlineColor = params.scanOutlineColor;
+  });
+  gui.add(params, "scanOutlineWidth", 0, 10, 0.5).onChange(() => {
+    scanEntity.wall.outlineWidth = params.scanOutlineWidth;
+  });
+
+  gui.addColor(params, "maskColor").onChange(() => {
+    maskEntity.ellipsoid.material = Cesium.Color.fromCssColorString(
+      params.maskColor
+    ).withAlpha(0.5);
+  });
+  gui.add(params, "maskFill").onChange(() => {
+    maskEntity.ellipsoid.fill = params.maskFill;
+  });
+  gui.add(params, "maskOutline").onChange(() => {
+    maskEntity.ellipsoid.outline = params.maskOutline;
+  });
+  gui.addColor(params, "maskOutlineColor").onChange(() => {
+    maskEntity.ellipsoid.outlineColor = params.maskOutlineColor;
+  });
+  gui.add(params, "maskOutlineWidth", 0, 10, 0.5).onChange(() => {
+    maskEntity.ellipsoid.outlineWidth = params.maskOutlineWidth;
+  });
+  gui.open();
+
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    baseLayerPicker: false,
+    timeline: false,
+    navigationHelpButton: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  // 根据两个点,开始角度、夹角度 求取立面的扇形
+  function computeCirclularFlight(x1, y1, x2, y2, fx, angle) {
+    let positionArr = [];
+    positionArr.push(x1);
+    positionArr.push(y1);
+    positionArr.push(0);
+
+    let radius = Cesium.Cartesian3.distance(
+      Cesium.Cartesian3.fromDegrees(x1, y1),
+      Cesium.Cartesian3.fromDegrees(x2, y2)
+    );
+
+    for (let i = fx; i <= fx + angle; i++) {
+      let h = radius * Math.sin((i * Math.PI) / 180.0);
+      let r = Math.cos((i * Math.PI) / 180.0);
+
+      let x = (x2 - x1) * r + x1;
+      let y = (y2 - y1) * r + y1;
+
+      positionArr.push(x);
+      positionArr.push(y);
+      positionArr.push(h);
+    }
+
+    return positionArr;
+  }
+
+  // 根据第一个 偏移距离 角度 求取第二个点的坐标
+  function calcPoints(x1, y1, radius, heading) {
+    let m = Cesium.Transforms.eastNorthUpToFixedFrame(
+      Cesium.Cartesian3.fromDegrees(x1, y1)
+    );
+
+    let rx = radius * Math.cos((heading * Math.PI) / 180.0);
+    let ry = radius * Math.sin((heading * Math.PI) / 180.0);
+
+    let translation = Cesium.Cartesian3.fromElements(rx, ry, 0);
+
+    let d = Cesium.Matrix4.multiplyByPoint(
+      m,
+      translation,
+      new Cesium.Cartesian3()
+    );
+
+    let c = Cesium.Cartographic.fromCartesian(d);
+
+    let x2 = Cesium.Math.toDegrees(c.longitude);
+    let y2 = Cesium.Math.toDegrees(c.latitude);
+
+    return computeCirclularFlight(x1, y1, x2, y2, 0, 90);
+  }
+
+  let heading = 0;
+
+  let positionArr = calcPoints(114, 30, 100, heading);
+
+  // 扫描片
+  let scanEntity = viewer.entities.add({
+    wall: {
+      positions: new Cesium.CallbackProperty(() => {
+        return Cesium.Cartesian3.fromDegreesArrayHeights(positionArr);
+      }, false),
+      material: Cesium.Color.fromCssColorString(params.scanColor).withAlpha(
+        0.5
+      ),
+      fill: params.scanFill,
+      outlineColor: Cesium.Color.fromCssColorString(
+        params.scanOutlineColor
+      ).withAlpha(0.5),
+      outlineWidth: params.scanOutlineWidth,
+      outline: params.scanOutline,
+    },
+  });
+
+  // 遮罩
+  let maskEntity = viewer.entities.add({
+    position: Cesium.Cartesian3.fromDegrees(114, 30),
+    ellipsoid: {
+      radii: new Cesium.Cartesian3(100, 100, 100),
+      maximumCone: Cesium.Math.toRadians(90),
+      material: Cesium.Color.AQUAMARINE.withAlpha(0.3),
+      fill: params.maskFill,
+      outline: params.maskOutline,
+      outlineColor: Cesium.Color.fromCssColorString(
+        params.maskOutlineColor
+      ).withAlpha(0.5),
+      outlineWidth: params.maskOutlineWidth,
+    },
+  });
+
+  viewer.zoomTo(viewer.entities);
+
+  // 执行动画效果
+  viewer.clock.onTick.addEventListener(() => {
+    heading += params.scanSpeed;
+    positionArr = calcPoints(114, 30, 100, heading);
+  });
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

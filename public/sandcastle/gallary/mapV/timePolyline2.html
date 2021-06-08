@@ -1,0 +1,115 @@
+import cesium,mapv,axios;
+<div id="cesiumContainer"></div>
+<div id="time"></div>
+<script>
+  var viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    timeline: false,
+    navigationHelpButton: false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  var tencentMapProvider = new Cesium.UrlTemplateImageryProvider({
+    url:
+      "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={reverseY}&styleid=4&scene=0&version=347",
+    subdomains: ["1", "2", "3"],
+  });
+
+  // 添加腾讯在线地图服务
+  viewer.scene.imageryLayers.addImageryProvider(tencentMapProvider);
+
+  viewer.scene.canvas.setAttribute("tabIndex", 0);
+
+  axios.get("../sandcastle/data/others/wuhan-car").then((res) => {
+    rs = res.data;
+    var data = [];
+    var timeData = [];
+
+    rs = rs.split("\n");
+    var maxLength = 0;
+    for (var i = 0; i < rs.length - 1; i++) {
+      var item = rs[i].split(",");
+      var coordinates = [];
+      if (item.length > maxLength) {
+        maxLength = item.length;
+      }
+      for (j = 0; j < item.length; j += 2) {
+        coordinates.push([
+          parseFloat(item[j]) / 100000 - 13,
+          parseFloat(item[j + 1]) / 100000 - 5,
+        ]);
+        timeData.push({
+          geometry: {
+            type: "Point",
+            coordinates: [
+              parseFloat(item[j]) / 100000 - 13,
+              parseFloat(item[j + 1]) / 100000 - 5,
+            ],
+          },
+          count: 1,
+          time: j,
+        });
+      }
+      data.push({
+        geometry: {
+          type: "LineString",
+          coordinates: coordinates,
+        },
+      });
+    }
+
+    var dataSet = new mapv.DataSet(data);
+
+    var options = {
+      strokeStyle: "rgba(53,57,255,0.5)",
+      coordType: "bd09mc",
+      // globalCompositeOperation: 'lighter',
+      shadowColor: "rgba(53,57,255,0.2)",
+      shadowBlur: 3,
+      lineWidth: 3.0,
+      draw: "simple",
+    };
+
+    var mapvLayer = new mapv.cesiumMapLayer(viewer, dataSet, options);
+
+    var dataSet = new mapv.DataSet(timeData);
+
+    var options = {
+      fillStyle: "rgba(255, 250, 250, 0.2)",
+      coordType: "bd09mc",
+      globalCompositeOperation: "lighter",
+      size: 1.5,
+      animation: {
+        stepsRange: {
+          start: 0,
+          end: 100,
+        },
+        trails: 3,
+        duration: 5,
+      },
+      draw: "simple",
+    };
+
+    var mapvLayer = new mapv.cesiumMapLayer(viewer, dataSet, options);
+  });
+
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromElements(
+      -2305365.0219130414,
+      5109012.303747344,
+      3296176.2112036203
+    ),
+    orientation: {
+      heading: Cesium.Math.toRadians(0),
+      pitch: Cesium.Math.toRadians(-90),
+    },
+  });
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

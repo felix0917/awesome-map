@@ -31,6 +31,26 @@ import cesium;
     console.log("coorInfo: ", [longitude, latitude, height]);
     console.log("cameraInfo:", cameraInfo);
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+  // 添加腾讯在线地图服务
+  let tencentMapProvider = new Cesium.UrlTemplateImageryProvider({
+    url:
+      "https://rt{s}.map.gtimg.com/tile?z={z}&x={x}&y={reverseY}&styleid=4&scene=0&version=347",
+    subdomains: ["1", "2", "3"],
+  });
+
+  viewer.scene.imageryLayers.addImageryProvider(tencentMapProvider);
+
+  // 加载3dtile模型
+  let tileset = new Cesium.Cesium3DTileset({
+    url: "http://localhost:917/7_webp+grid+zip/tileset.json",
+  });
+
+  viewer.scene.primitives.add(tileset);
+  tileset.readyPromise.then(function(argument) {
+    // 更改相机状态
+    viewer.camera.flyToBoundingSphere(tileset.boundingSphere);
+  });
 </script>
 <style>
   #cesiumContainer {

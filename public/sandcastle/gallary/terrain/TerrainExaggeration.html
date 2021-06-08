@@ -3,9 +3,13 @@ import cesium;
 <script>
   let viewer = new Cesium.Viewer("cesiumContainer", {
     animation: false,
+    baseLayerPicker: false,
     timeline: false,
     navigationHelpButton: false,
-    terrainExaggeration:8,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    terrainExaggeration: 8,
   });
   // 隐藏版权
   viewer._cesiumWidget._creditContainer.style.display = "none";
@@ -13,7 +17,7 @@ import cesium;
   let terrainProvider = new Cesium.CesiumTerrainProvider({
     url: "http://data.marsgis.cn/terrain",
   });
-  
+
   // 添加cesium格化中国地形服务（感谢marsgis提供的服务）
   viewer.terrainProvider = terrainProvider;
 

@@ -1,9 +1,30 @@
-import cesium;
+import cesium,GUI;
 <div id="cesiumContainer"></div>
 <script>
+  const params = {
+    modelType: "/Duck/Duck.gltf",
+  };
+
+  let gui = new dat.GUI();
+  gui
+    .add(params, "modelType", {
+      Duck: "/Duck/Duck.gltf",
+      CesiumMan: "/CesiumMan/CesiumMan.gltf",
+      CesiumMilkTruck: "/CesiumMilkTruck/CesiumMilkTruck.gltf",
+    })
+    .onChange((val) => {
+      changeModel(params.modelType);
+    });
+  gui.open();
+
   let viewer = new Cesium.Viewer("cesiumContainer", {
     animation: false,
+    baseLayerPicker: false,
     timeline: false,
+    navigationHelpButton: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
     navigationHelpButton: false,
   });
   // 隐藏版权
@@ -11,8 +32,8 @@ import cesium;
 
   let positions = [];
   for (let i = 0; i < 30000; i++) {
-    let lng_rd = Math.random() * 3;
-    let lat_rd = Math.random() * 3;
+    let lng_rd = Math.random() * 8;
+    let lat_rd = Math.random() * 8;
 
     let lng = 122.62212856396198 + lng_rd;
     let lat = 23.928205954958536 + lat_rd;
@@ -39,12 +60,12 @@ import cesium;
     });
   }
 
-  let collection = viewer.scene.primitives.add(
-    new Cesium.ModelInstanceCollection({
-      url: "../sandcastle/data/model/",
-      instances: instances,
-    })
-  );
+  let modelInstanceCollection = new Cesium.ModelInstanceCollection({
+    url: "../sandcastle/data/model/" + params.modelType,
+    instances: instances,
+  });
+
+  let collection = viewer.scene.primitives.add(modelInstanceCollection);
 
   viewer.camera.setView({
     destination: new Cesium.Cartesian3(
@@ -58,6 +79,17 @@ import cesium;
       roll: 0.0,
     },
   });
+
+  function changeModel(modelType) {
+    viewer.scene.primitives.remove(modelInstanceCollection);
+
+    modelInstanceCollection = new Cesium.ModelInstanceCollection({
+      url: "../sandcastle/data/model/" + params.modelType,
+      instances: instances,
+    });
+
+    collection = viewer.scene.primitives.add(modelInstanceCollection);
+  }
 </script>
 <style>
   #cesiumContainer {

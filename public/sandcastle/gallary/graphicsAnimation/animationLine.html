@@ -1,0 +1,90 @@
+import cesium,GUI;
+<div id="cesiumContainer"></div>
+<script>
+  const params = {
+    animationSpeed: 0.01,
+    repeat: true,
+    fadingPolylineWidth: 10,
+    fadeInColor: "#FF0000",
+    fadeOutColor: "#00FFFF",
+  };
+
+  let gui = new dat.GUI();
+  gui.add(params, "animationSpeed", 0.001, 0.1, 0.001).onChange(() => {
+    speed = params.animationSpeed;
+  });
+  gui.add(params, "repeat").onChange(() => {
+    fadingPolyline.material.uniforms.repeat = params.repeat;
+  });
+  gui.add(params, "fadingPolylineWidth", 2, 20, 1).onChange(() => {
+    fadingPolyline.width = params.fadingPolylineWidth;
+  });
+  gui.addColor(params, "fadeInColor").onChange(() => {
+    console.log(fadingPolyline);
+    fadingPolyline.material.uniforms.fadeInColor = Cesium.Color.fromCssColorString(
+      params.fadeInColor
+    ).withAlpha(0.5);
+  });
+  gui.addColor(params, "fadeOutColor").onChange(() => {
+    fadingPolyline.material.uniforms.fadeOutColor = Cesium.Color.fromCssColorString(
+      params.fadeOutColor
+    );
+  });
+  gui.open();
+
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    baseLayerPicker: false,
+    timeline: false,
+    navigationHelpButton: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    navigationHelpButton: false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  let polylines = viewer.scene.primitives.add(new Cesium.PolylineCollection());
+
+  let fadingPolyline = polylines.add({
+    positions: Cesium.Cartesian3.fromDegreesArray([114, 35, 114, 45]),
+    width: params.fadingPolylineWidth,
+    material: Cesium.Material.fromType(Cesium.Material.FadeType, {
+      repeat: params.repeat,
+      fadeInColor: Cesium.Color.RED,
+      fadeOutColor: Cesium.Color.fromCssColorString(
+        params.fadeOutColor
+      ).withAlpha(0.5),
+      time: new Cesium.Cartesian2(0.0, 0.0),
+      fadeDirection: {
+        x: true,
+        y: false,
+      },
+    }),
+  });
+
+  viewer.camera.setView({
+    destination: new Cesium.Cartesian3.fromDegrees(114, 40, 3000000),
+  });
+
+  let i = 0;
+  let speed = params.animationSpeed;
+  function render() {
+    i += speed;
+    if (i >= 1.0) {
+      i = 0; // 控制在0.0到1.0之间
+    }
+    fadingPolyline.material.uniforms.time.x = i;
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

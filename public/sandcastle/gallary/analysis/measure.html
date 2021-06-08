@@ -1,0 +1,588 @@
+import cesium,GUI;
+<div id="cesiumContainer"></div>
+<script>
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    baseLayerPicker: false,
+    timeline: false,
+    navigationHelpButton: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  // 开启地形深度监测
+  viewer.scene.globe.depthTestAgainstTerrain = true;
+
+  // 添加ArcGIS地形服务
+  let terrainProvider = new Cesium.ArcGISTiledElevationTerrainProvider({
+    url: "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer",
+  });
+  viewer.terrainProvider = terrainProvider;
+
+  viewer.camera.setView({
+    destination: Cesium.Cartesian3.fromDegrees(
+      96.70456483909693,
+      28.883444927447762,
+      48977.26981733466
+    ),
+    orientation: {
+      heading: Cesium.Math.toRadians(0),
+      pitch: Cesium.Math.toRadians(-31),
+    },
+  });
+
+  let measure = new MeasureTools(viewer);
+  const params = {
+    measureDist: function() {
+      measure.measureDistance();
+    },
+    measureArea: function() {
+      measure.measureArea();
+    },
+    measureHeight: function() {
+      measure.measureHeight();
+    },
+    measureClear: function() {
+      measure.measureClear();
+    },
+  };
+
+  let gui = new dat.GUI();
+  gui.add(params, "measureDist").name("距离测量");
+  gui.add(params, "measureArea").name("面积测量");
+  gui.add(params, "measureHeight").name("高度测量");
+  gui.add(params, "measureClear").name("清除");
+  gui.open();
+
+  /**
+   * 测量线段
+   */
+  function MeasureTools(viewer) {
+    let entityCollection = [];
+
+    this.getCollection = function() {
+      return entityCollection;
+    };
+
+    /**
+     * 清除
+     */
+    this.measureClear = function() {
+      for (let i = 0; i < entityCollection.length; i++) {
+        viewer.entities.remove(entityCollection[i]);
+      }
+      entityCollection = [];
+    };
+
+    /**
+     * 测距
+     */
+    this.measureDistance = function() {
+      let positions = [];
+      let labelEntity = null; // 标签实体
+
+      // 注册鼠标左击事件
+      viewer.screenSpaceEventHandler.setInputAction(function(clickEvent) {
+        let cartesian = viewer.scene.pickPosition(clickEvent.position); // 坐标
+
+        // 存储第一个点
+        if (positions.length == 0) {
+          positions.push(cartesian.clone());
+
+          addPoint(cartesian);
+
+          // 注册鼠标移动事件
+          viewer.screenSpaceEventHandler.setInputAction(function(moveEvent) {
+            let movePosition = viewer.scene.pickPosition(moveEvent.endPosition); // 鼠标移动的点
+            if (positions.length == 2) {
+              positions.pop();
+              positions.push(movePosition);
+
+              // 绘制label
+              if (labelEntity) {
+                viewer.entities.remove(labelEntity);
+                entityCollection.splice(
+                  entityCollection.indexOf(labelEntity),
+                  1
+                );
+              }
+
+              // 计算中点
+              let centerPoint = Cesium.Cartesian3.midpoint(
+                positions[0],
+                positions[1],
+                new Cesium.Cartesian3()
+              );
+              // 计算距离
+              let lengthText =
+                "距离：" + getLengthText(positions[0], positions[1]);
+
+              labelEntity = addLabel(centerPoint, lengthText);
+              entityCollection.push(labelEntity);
+            } else {
+              positions.push(movePosition);
+
+              // 绘制线
+              addLine(positions);
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        } else {
+          // 存储第二个点
+          positions.pop();
+          positions.push(cartesian);
+          addPoint(cartesian);
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.LEFT_CLICK
+          );
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.MOUSE_MOVE
+          );
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    };
+
+    /**
+     * 测面积
+     */
+    this.measureArea = function() {
+      let positions = [];
+      let clickStatus = false;
+      let labelEntity = null;
+
+      viewer.screenSpaceEventHandler.setInputAction(function(clickEvent) {
+        clickStatus = true;
+        // let cartesian = viewer.scene.pickPosition(clickEvent.position);
+        let cartesian = viewer.scene.globe.pick(
+          viewer.camera.getPickRay(clickEvent.position),
+          viewer.scene
+        );
+        if (positions.length == 0) {
+          positions.push(cartesian.clone()); //鼠标左击 添加第1个点
+          addPoint(cartesian);
+
+          viewer.screenSpaceEventHandler.setInputAction(function(moveEvent) {
+            let movePosition = viewer.scene.globe.pick(
+              viewer.camera.getPickRay(moveEvent.endPosition),
+              viewer.scene
+            );
+            if (positions.length == 1) {
+              positions.push(movePosition);
+              addLine(positions);
+            } else {
+              if (clickStatus) {
+                positions.push(movePosition);
+              } else {
+                positions.pop();
+                positions.push(movePosition);
+              }
+            }
+
+            if (positions.length >= 3) {
+              // 绘制label
+              if (labelEntity) {
+                viewer.entities.remove(labelEntity);
+                entityCollection.splice(
+                  entityCollection.indexOf(labelEntity),
+                  1
+                );
+              }
+
+              let text = "面积：" + getArea(positions);
+              let centerPoint = getCenterOfGravityPoint(positions);
+              labelEntity = addLabel(centerPoint, text);
+
+              entityCollection.push(labelEntity);
+            }
+
+            clickStatus = false;
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        } else if (positions.length == 2) {
+          positions.pop();
+          positions.push(cartesian.clone()); // 鼠标左击 添加第2个点
+
+          addPoint(cartesian);
+
+          addPolyGon(positions);
+
+          // 右击结束
+          viewer.screenSpaceEventHandler.setInputAction(function(clickEvent) {
+            // let clickPosition = viewer.scene.pickPosition(clickEvent.position);
+            let clickPosition = viewer.scene.globe.pick(
+              viewer.camera.getPickRay(clickEvent.position),
+              viewer.scene
+            );
+            console.log(clickPosition);
+
+            positions.pop();
+            positions.push(clickPosition);
+            positions.push(positions[0]); // 闭合
+            addPoint(clickPosition);
+
+            viewer.screenSpaceEventHandler.removeInputAction(
+              Cesium.ScreenSpaceEventType.LEFT_CLICK
+            );
+            viewer.screenSpaceEventHandler.removeInputAction(
+              Cesium.ScreenSpaceEventType.MOUSE_MOVE
+            );
+            viewer.screenSpaceEventHandler.removeInputAction(
+              Cesium.ScreenSpaceEventType.RIGHT_CLICK
+            );
+          }, Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+        } else if (positions.length >= 3) {
+          positions.pop();
+          positions.push(cartesian.clone()); // 鼠标左击 添加第3个点
+          addPoint(cartesian);
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    };
+
+    /**
+     * 测高
+     */
+    this.measureHeight = function() {
+      let positions = [];
+      let labelEntity_1 = null; // 标签实体
+      let labelEntity_2 = null; // 标签实体
+      let labelEntity_3 = null; // 标签实体
+
+      // 注册鼠标左击事件
+      viewer.screenSpaceEventHandler.setInputAction(function(clickEvent) {
+        let cartesian = viewer.scene.pickPosition(clickEvent.position); // 坐标
+
+        // 存储第一个点
+        if (positions.length == 0) {
+          positions.push(cartesian.clone());
+          addPoint(cartesian);
+
+          // 注册鼠标移动事件
+          viewer.screenSpaceEventHandler.setInputAction(function(moveEvent) {
+            let movePosition = viewer.scene.pickPosition(moveEvent.endPosition); // 鼠标移动的点
+            if (positions.length >= 2) {
+              positions.pop();
+              positions.pop();
+              positions.pop();
+
+              let cartographic = Cesium.Cartographic.fromCartesian(
+                movePosition
+              );
+              let height = Cesium.Cartographic.fromCartesian(positions[0])
+                .height;
+
+              let verticalPoint = Cesium.Cartesian3.fromDegrees(
+                Cesium.Math.toDegrees(cartographic.longitude),
+                Cesium.Math.toDegrees(cartographic.latitude),
+                height
+              );
+              positions.push(verticalPoint);
+              positions.push(movePosition);
+              positions.push(positions[0]);
+
+              // 绘制label
+              if (labelEntity_1) {
+                viewer.entities.remove(labelEntity_1);
+                entityCollection.splice(
+                  entityCollection.indexOf(labelEntity_1),
+                  1
+                );
+                viewer.entities.remove(labelEntity_2);
+                entityCollection.splice(
+                  entityCollection.indexOf(labelEntity_2),
+                  1
+                );
+                viewer.entities.remove(labelEntity_3);
+                entityCollection.splice(
+                  entityCollection.indexOf(labelEntity_3),
+                  1
+                );
+              }
+
+              // 计算中点
+              let centerPoint_1 = Cesium.Cartesian3.midpoint(
+                positions[0],
+                positions[1],
+                new Cesium.Cartesian3()
+              );
+              // 计算距离
+              let lengthText_1 =
+                "水平距离：" + getLengthText(positions[0], positions[1]);
+
+              labelEntity_1 = addLabel(centerPoint_1, lengthText_1);
+              entityCollection.push(labelEntity_1);
+
+              // 计算中点
+              let centerPoint_2 = Cesium.Cartesian3.midpoint(
+                positions[1],
+                positions[2],
+                new Cesium.Cartesian3()
+              );
+              // 计算距离
+              let lengthText_2 =
+                "垂直距离：" + getLengthText(positions[1], positions[2]);
+
+              labelEntity_2 = addLabel(centerPoint_2, lengthText_2);
+              entityCollection.push(labelEntity_2);
+
+              // 计算中点
+              let centerPoint_3 = Cesium.Cartesian3.midpoint(
+                positions[2],
+                positions[3],
+                new Cesium.Cartesian3()
+              );
+              // 计算距离
+              let lengthText_3 =
+                "直线距离：" + getLengthText(positions[2], positions[3]);
+
+              labelEntity_3 = addLabel(centerPoint_3, lengthText_3);
+              entityCollection.push(labelEntity_3);
+            } else {
+              let verticalPoint = new Cesium.Cartesian3(
+                movePosition.x,
+                movePosition.y,
+                positions[0].z
+              );
+              positions.push(verticalPoint);
+              positions.push(movePosition);
+              positions.push(positions[0]);
+              // 绘制线
+              addLine(positions);
+            }
+          }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        } else {
+          // 存储第二个点
+          positions.pop();
+          positions.pop();
+          positions.pop();
+          let cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+          let height = Cesium.Cartographic.fromCartesian(positions[0]).height;
+
+          let verticalPoint = Cesium.Cartesian3.fromDegrees(
+            Cesium.Math.toDegrees(cartographic.longitude),
+            Cesium.Math.toDegrees(cartographic.latitude),
+            height
+          );
+          positions.push(verticalPoint);
+          positions.push(cartesian);
+          positions.push(positions[0]);
+          addPoint(cartesian);
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.LEFT_CLICK
+          );
+          viewer.screenSpaceEventHandler.removeInputAction(
+            Cesium.ScreenSpaceEventType.MOUSE_MOVE
+          );
+        }
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    };
+
+    /**
+     * 添加点
+     * @param position
+     */
+    let addPoint = function(position) {
+      entityCollection.push(
+        viewer.entities.add(
+          new Cesium.Entity({
+            position: position,
+            point: {
+              color: Cesium.Color.GREEN,
+              pixelSize: 10,
+              scaleByDistance: new Cesium.NearFarScalar(500, 1.0, 2000, 0.0),
+              translucencyByDistance: new Cesium.NearFarScalar(
+                500,
+                1.0,
+                2000,
+                0.0
+              ),
+            },
+          })
+        )
+      );
+    };
+
+    /**
+     * 添加线
+     * @param positions
+     */
+    let addLine = function(positions) {
+      let dynamicPositions = new Cesium.CallbackProperty(function() {
+        return positions;
+      }, false);
+      entityCollection.push(
+        viewer.entities.add(
+          new Cesium.Entity({
+            polyline: {
+              positions: dynamicPositions,
+              width: 1,
+              clampToGround: true,
+              material: Cesium.Color.RED,
+              color: "#fafa5a",
+            },
+          })
+        )
+      );
+    };
+
+    /**
+     * 添加面
+     * @param positions
+     */
+    let addPolyGon = function(positions) {
+      let dynamicPositions = new Cesium.CallbackProperty(function() {
+        return new Cesium.PolygonHierarchy(positions);
+      }, false);
+      entityCollection.push(
+        viewer.entities.add(
+          new Cesium.Entity({
+            polygon: {
+              hierarchy: dynamicPositions,
+              material: Cesium.Color.RED.withAlpha(0.2),
+              classificationType: Cesium.ClassificationType.BOTH, // 贴地表和贴模型,如果设置了，这不能使用挤出高度
+            },
+          })
+        )
+      );
+    };
+
+    /**
+     * 添加标签
+     * @param position
+     * @param text
+     */
+    let addLabel = function(centerPoint, text) {
+      return viewer.entities.add(
+        new Cesium.Entity({
+          position: centerPoint,
+          label: {
+            text: text,
+            font: "10pt sans-serif",
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE, //FILL  FILL_AND_OUTLINE OUTLINE
+            fillColor: Cesium.Color.YELLOW,
+            showBackground: true, //指定标签后面背景的可见性
+            backgroundColor: new Cesium.Color(0.165, 0.165, 0.165, 0.8), // 背景颜色
+            backgroundPadding: new Cesium.Cartesian2(6, 6), //指定以像素为单位的水平和垂直背景填充padding
+            pixelOffset: new Cesium.Cartesian2(0, -25),
+          },
+        })
+      );
+    };
+
+    /**
+     * 计算两点距离
+     * @param firstPoint
+     * @param secondPoint
+     */
+    let getLengthText = function(firstPoint, secondPoint) {
+      // 计算距离
+      let length = Cesium.Cartesian3.distance(firstPoint, secondPoint);
+      if (length > 1000) {
+        length = (length / 1000).toFixed(2) + " 公里";
+      } else {
+        length = length.toFixed(2) + " 米";
+      }
+      return length;
+    };
+
+    //计算多边形面积
+    let getArea = function(points) {
+      let radiansPerDegree = Math.PI / 180.0; //角度转化为弧度(rad)
+      let degreesPerRadian = 180.0 / Math.PI; //弧度转化为角度
+
+      /*角度*/
+      function Angle(p1, p2, p3) {
+        let bearing21 = Bearing(p2, p1);
+        let bearing23 = Bearing(p2, p3);
+        let angle = bearing21 - bearing23;
+        if (angle < 0) {
+          angle += 360;
+        }
+        return angle;
+      }
+
+      /*方向*/
+      function Bearing(from, to) {
+        from = Cesium.Cartographic.fromCartesian(from);
+        to = Cesium.Cartographic.fromCartesian(to);
+
+        let lat1 = from.latitude;
+        let lon1 = from.longitude;
+        let lat2 = to.latitude;
+        let lon2 = to.longitude;
+        let angle = -Math.atan2(
+          Math.sin(lon1 - lon2) * Math.cos(lat2),
+          Math.cos(lat1) * Math.sin(lat2) -
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon1 - lon2)
+        );
+        if (angle < 0) {
+          angle += Math.PI * 2.0;
+        }
+        angle = angle * degreesPerRadian; //角度
+        return angle;
+      }
+
+      function distance(point1, point2) {
+        let point1cartographic = Cesium.Cartographic.fromCartesian(point1);
+        let point2cartographic = Cesium.Cartographic.fromCartesian(point2);
+        /**根据经纬度计算出距离**/
+        let geodesic = new Cesium.EllipsoidGeodesic();
+        geodesic.setEndPoints(point1cartographic, point2cartographic);
+        let s = geodesic.surfaceDistance;
+        //console.log(Math.sqrt(Math.pow(distance, 2) + Math.pow(endheight, 2)));
+        //返回两点之间的距离
+        s = Math.sqrt(
+          Math.pow(s, 2) +
+            Math.pow(point2cartographic.height - point1cartographic.height, 2)
+        );
+        return s;
+      }
+
+      let res = 0;
+      //拆分三角曲面
+
+      for (let i = 0; i < points.length - 2; i++) {
+        let j = (i + 1) % points.length;
+        let k = (i + 2) % points.length;
+        let totalAngle = Angle(points[i], points[j], points[k]);
+
+        let dis_temp1 = distance(points[j], points[0]);
+        let dis_temp2 = distance(points[k], points[0]);
+        res += (dis_temp1 * dis_temp2 * Math.sin(totalAngle)) / 2;
+        // console.log(res);
+      }
+
+      if (res < 1000000) {
+        res = Math.abs(res).toFixed(4) + " 平方米";
+      } else {
+        res = Math.abs((res / 1000000.0).toFixed(4)) + " 平方公里";
+      }
+
+      return res;
+    };
+
+    /**
+     * 计算多边形的中心（简单的处理）
+     * @param mPoints
+     * @returns {*[]}
+     */
+    let getCenterOfGravityPoint = function(mPoints) {
+      let centerPoint = mPoints[0];
+      for (let i = 1; i < mPoints.length; i++) {
+        centerPoint = Cesium.Cartesian3.midpoint(
+          centerPoint,
+          mPoints[i],
+          new Cesium.Cartesian3()
+        );
+      }
+      return centerPoint;
+    };
+  }
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

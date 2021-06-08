@@ -1,0 +1,52 @@
+import cesium;
+<div id="cesiumContainer"></div>
+<video id="videoSrc" autoplay loop crossorigin controls style="display: none;">
+  <source src="../sandcastle/data/video/sintel.mp4" type="video/mp4" />
+</video>
+<script>
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: true,
+    baseLayerPicker: false,
+    timeline: true,
+    navigationHelpButton: false,
+    geocoder: false,
+    homeButton: false,
+    sceneModePicker: false,
+    shouldAnimate: true,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  let video = viewer.entities.add({
+    name: "Blue box",
+    position: Cesium.Cartesian3.fromDegrees(-114.0, 40.0, 10000.0),
+    box: {
+      dimensions: new Cesium.Cartesian3(400000.0, 2.0, 160000.0),
+      material: Cesium.Color.WHITE,
+    },
+  });
+
+  let videoElement = document.getElementById("videoSrc");
+  video.box.material = videoElement;
+
+  viewer.zoomTo(video);
+
+  // 设置与时钟同步
+  let synchronizer = new Cesium.VideoSynchronizer({
+    clock: viewer.clock,
+    element: videoElement,
+  });
+
+  // 取消时钟同步;
+  if (Cesium.defined(synchronizer)) {
+    synchronizer = synchronizer.destroy();
+    videoElement.playbackRate = 1.0;
+  }
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>
