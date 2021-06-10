@@ -143,7 +143,7 @@
         "name": "animationLine",
         "label": "动态线",
         "description": "",
-        "suffix":""
+        "suffix": ""
       }
     ]
   },
@@ -212,7 +212,68 @@
     "name": "echarts",
     "label": "Echarts",
     "description": "",
-    "examples": []
+    "examples": [
+      {
+        "name": "pm2.5",
+        "label": "pm2.5分布",
+        "description": ""
+      },
+      {
+        "name": "pm2.5_2",
+        "label": "pm2.5分布2",
+        "description": ""
+      },
+      {
+        "name": "pm2.5_3",
+        "label": "pm2.5分布3",
+        "description": ""
+      },
+      {
+        "name": "qianxi",
+        "label": "迁徙线",
+        "description": ""
+      },
+      {
+        "name": "qianxi_2",
+        "label": "迁徙线2",
+        "description": ""
+      },
+      {
+        "name": "qianxi_3",
+        "label": "迁徙线3",
+        "description": ""
+      },
+      {
+        "name": "wuliu",
+        "label": "物流线",
+        "description": ""
+      },
+      {
+        "name": "airline",
+        "label": "航线",
+        "description": ""
+      },
+      {
+        "name": "airline_2",
+        "label": "航线2",
+        "description": ""
+      },
+      {
+        "name": "beijing_bus_line",
+        "label": "北京公交路线",
+        "description": ""
+      },
+      {
+        "name": "beijing_bus_line_effect",
+        "label": "北京公交路线特效",
+        "description": ""
+      },
+      {
+        "name": "heatmap",
+        "label": "热力图",
+        "description": ""
+      }
+    ]
   },
   {
     "name": "mapV",
@@ -226,7 +287,7 @@
       },
       {
         "name": "timePoint1",
-        "label": "动点1",
+        "label": "动点",
         "description": ""
       },
       {
@@ -238,7 +299,7 @@
         "name": "timePoint3",
         "label": "动点3",
         "description": ""
-      },  
+      },
       {
         "name": "intensityPoint",
         "label": "强度点",
@@ -273,27 +334,27 @@
         "name": "bubblePoint",
         "label": "气泡点",
         "description": ""
-      },  
+      },
       {
         "name": "heatmapTimePoint",
         "label": "热力动点",
         "description": ""
-      },  
+      },
       {
         "name": "weiboPoint",
         "label": "微博点",
         "description": ""
-      },  
+      },
       {
         "name": "nycPoint",
         "label": "纽约10万出租车点",
         "description": ""
-      },  
+      },
       {
         "name": "ymyYummyPoint",
         "label": "圆明园周边美食POI",
         "description": ""
-      }, 
+      },
       {
         "name": "polyline",
         "label": "线",
@@ -301,7 +362,7 @@
       },
       {
         "name": "timePolyline1",
-        "label": "动线1",
+        "label": "动线",
         "description": ""
       },
       {
@@ -343,7 +404,7 @@
         "name": "intensityPolygon",
         "label": "强度面",
         "description": ""
-      }   
+      }
     ]
   },
   {
