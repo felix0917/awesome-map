@@ -123,6 +123,16 @@
     "description": "",
     "examples": [
       {
+        "name": "gltf",
+        "label": "3D模型",
+        "description": ""
+      },
+      {
+        "name": "pipeline",
+        "label": "管道",
+        "description": ""
+      },
+      {
         "name": "TileSet",
         "label": "倾斜摄影数据",
         "description": ""
@@ -168,11 +178,6 @@
         "description": ""
       },
       {
-        "name": "profile",
-        "label": "剖面分析",
-        "description": ""
-      },
-      {
         "name": "videoMap",
         "label": "视频投射",
         "description": ""
@@ -188,7 +193,38 @@
     "name": "sceneEffects",
     "label": "场景特效",
     "description": "",
-    "examples": []
+    "examples": [
+      {
+        "name": "layersSplit",
+        "label": "帘卷效果",
+        "description": ""
+      },
+      {
+        "name": "ocean",
+        "label": "海洋效果",
+        "description": ""
+      },
+      {
+        "name": "water",
+        "label": "水面材质",
+        "description": ""
+      },
+      {
+        "name": "rain",
+        "label": "雨天气",
+        "description": ""
+      },
+      {
+        "name": "snow",
+        "label": "雪天气",
+        "description": ""
+      },
+      {
+        "name": "fog",
+        "label": "雾天气",
+        "description": ""
+      }
+    ]
   },
   {
     "name": "dataVisualization",

@@ -20,7 +20,6 @@ import cesium,GUI;
     fadingPolyline.width = params.fadingPolylineWidth;
   });
   gui.addColor(params, "fadeInColor").onChange(() => {
-    console.log(fadingPolyline);
     fadingPolyline.material.uniforms.fadeInColor = Cesium.Color.fromCssColorString(
       params.fadeInColor
     ).withAlpha(0.5);
