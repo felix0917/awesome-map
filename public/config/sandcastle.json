@@ -133,8 +133,28 @@
         "description": ""
       },
       {
-        "name": "TileSet",
+        "name": "tileSet",
         "label": "倾斜摄影数据",
+        "description": ""
+      },
+      {
+        "name": "whiteModel",
+        "label": "城市白模",
+        "description": ""
+      },
+      {
+        "name": "whiteModelStyle",
+        "label": "白模(表达式渲染)",
+        "description": ""
+      },
+      {
+        "name": "whiteModelShader",
+        "label": "白模(着色器渲染)",
+        "description": ""
+      },
+      {
+        "name": "whiteModelStyleAndShader",
+        "label": "白模(融合渲染)",
         "description": ""
       }
     ]

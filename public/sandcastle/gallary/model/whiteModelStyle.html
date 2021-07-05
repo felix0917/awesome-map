@@ -1,0 +1,48 @@
+import cesium;
+<div id="cesiumContainer"></div>
+<script>
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    timeline: false,
+    navigationHelpButton: false,
+    terrainExaggeration: 8,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  let tileset = new Cesium.Cesium3DTileset({
+    url: "http://localhost:917/nj/tileset.json",
+    skipLevelOfDetail: true,
+    baseScreenSpaceError: 1024,
+    skipScreenSpaceErrorFactor: 16,
+    skipLevels: 1,
+    immediatelyLoadDesiredLevelOfDetail: true,
+    loadSiblings: false,
+    cullWithChildrenBounds: true,
+  });
+
+  let style = new Cesium.Cesium3DTileStyle();
+  style.color = {
+    conditions: [
+      ["${Floor} >= 300", "rgba(45, 0, 75, 0.5)"],
+      ["${Floor} >= 200", "rgb(102, 71, 151)"],
+      ["${Floor} >= 100", "rgb(170, 162, 204)"],
+      ["${Floor} >= 50", "rgb(224, 226, 238)"],
+      ["${Floor} >= 25", "rgb(252, 230, 200)"],
+      ["${Floor} >= 10", "rgb(248, 176, 87)"],
+      ["${Floor} >= 5", "rgb(198, 106, 11)"],
+      ["true", "rgb(127, 59, 8)"],
+    ],
+  };
+  tileset.style = style;
+  
+  viewer.scene.primitives.add(tileset);
+  viewer.zoomTo(tileset);
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>
