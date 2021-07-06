@@ -220,6 +220,11 @@
         "description": ""
       },
       {
+        "name": "cloud",
+        "label": "云层效果",
+        "description": ""
+      },
+      {
         "name": "ocean",
         "label": "海洋效果",
         "description": ""
@@ -476,6 +481,11 @@
       {
         "name": "change3DTilesHeight",
         "label": "调整3DTiles高度",
+        "description": ""
+      },
+      {
+        "name": "exportScene",
+        "label": "场景导出",
         "description": ""
       }
     ]

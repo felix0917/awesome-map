@@ -1,0 +1,107 @@
+import cesium,GUI;
+<div id="cesiumContainer"></div>
+<script>
+  const params = {
+    show: true,
+    rotateAmount: 0.02,
+  };
+
+  let gui = new dat.GUI();
+  gui
+    .add(params, "show")
+    .onChange(() => {
+      cloudEffect.show(params.show);
+    })
+    .name("开启云层");
+  gui
+    .add(params, "rotateAmount", 0, 0.1, 0.01)
+    .onChange(() => {
+      cloudEffect.rotateAmount = params.rotateAmount;
+    })
+    .name("旋转速度");
+  gui.open();
+
+  let viewer = new Cesium.Viewer("cesiumContainer", {
+    animation: false,
+    timeline: false,
+    navigationHelpButton: false,
+  });
+  // 隐藏版权
+  viewer._cesiumWidget._creditContainer.style.display = "none";
+
+  class CloudEffect {
+    constructor(viewer, options) {
+      if (!viewer) throw new Error("no viewer object!");
+      options = options || {};
+      this.viewer = viewer;
+      this.heading = 0;
+      this.rotateAmount = 0.02;
+      this.init();
+    }
+
+    init() {
+      this.primitive = new Cesium.Primitive({
+        appearance: new Cesium.EllipsoidSurfaceAppearance({
+          material: new Cesium.Material({
+            fabric: {
+              type: "Image",
+              uniforms: {
+                color: new Cesium.Color(1.0, 1.0, 1.0, 1.0),
+                image: "../sandcastle/data/imgs/cloud.jpg",
+              },
+              components: {
+                alpha:
+                  "texture2D(image, fract(repeat * materialInput.st)).r * color.a",
+                diffuse: "vec3(1.0)",
+              },
+            },
+          }),
+        }),
+      });
+
+      this.primitive.geometryInstances = new Cesium.GeometryInstance({
+        geometry: new Cesium.EllipsoidGeometry({
+          vertexFormat: Cesium.VertexFormat.POSITION_AND_ST,
+          radii: this.viewer.scene.globe.ellipsoid.radii,
+        }),
+      });
+      this.primitive.show = true;
+      this.viewer.scene.primitives.add(this.primitive);
+      this.viewer.scene.postUpdate.addEventListener(this.onRotate, this);
+    }
+
+    destroy() {
+      if (!this.viewer || !this.primitive) return;
+      this.viewer.scene.postUpdate.removeEventListener(this.onRotate, this);
+      this.primitive.destroy();
+    }
+
+    show(visible) {
+      this.primitive.show = visible;
+    }
+
+    onRotate(scene, time) {
+      if (this.rotateAmount === 0) {
+        return;
+      }
+      this.heading += this.rotateAmount;
+      if (this.heading >= 360 || this.heading <= -360) {
+        this.heading = 0;
+      }
+      this.primitive.modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(
+        new Cesium.Cartesian3(),
+        new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(this.heading), 0, 0)
+      );
+    }
+  }
+  Cesium.CloudEffect = CloudEffect;
+
+  let cloudEffect = new Cesium.CloudEffect(viewer);
+</script>
+<style>
+  #cesiumContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>
