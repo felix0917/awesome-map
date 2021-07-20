@@ -1,5 +1,7 @@
 # awesome-map
 
+![index](./readme/index.gif)
+
 ## Project setup
 ```
 npm install
